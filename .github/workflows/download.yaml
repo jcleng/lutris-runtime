@@ -1,0 +1,45 @@
+
+name: dowload runtime
+
+on:
+  repository_dispatch:
+  workflow_dispatch:
+  schedule:
+    - cron:  '22 16 * * 2,4'
+
+jobs:
+  build:
+    runs-on: ubuntu-20.04
+    steps:
+    - name: Checkout
+      uses: actions/checkout@main
+
+    - name: Initialization environment
+      run: |
+        echo $(nproc)
+        free -h
+        sudo rm -rf /etc/apt/sources.list.d/* /usr/share/dotnet /usr/local/lib/android /opt/ghc
+        sudo -E apt-get -qq update
+        sudo -E apt-get -qq install flatpak
+    - name: install Lutris
+      run: |
+        sudo flatpak remote-add --if-not-exists flathub https://dl.flathub.org/repo/flathub.flatpakrepo
+        sudo flatpak install net.lutris.Lutris -y
+    - name: dowload runtime
+      run: |
+        flatpak run --command=lutris net.lutris.Lutris -r
+        touch release.txt
+        echo $(date +"%Y%m%d%H%M") >> release.txt
+
+        cd $HOME/.var/app/net.lutris.Lutris/data/lutris/runtime/
+        echo "RELEASE_PATH=$PWD" >> $GITHUB_ENV
+        tar -zcvf runtime.tar.gz ./
+
+    - name: Release
+      uses: softprops/action-gh-release@v1
+      env:
+        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+      with:
+        tag_name: $(date +"%Y%m%d%H%M")
+        body_path: release.txt
+        files: ${{ env.RELEASE_PATH }}/*.tar.gz
