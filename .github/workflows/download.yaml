@@ -2,10 +2,10 @@
 name: dowload runtime
 
 on:
-  repository_dispatch:
+#   repository_dispatch:
   workflow_dispatch:
-  schedule:
-    - cron:  '22 16 * * 2,4'
+#   schedule:
+    # - cron:  '22 16 * * 2,4'
 
 jobs:
   build:
